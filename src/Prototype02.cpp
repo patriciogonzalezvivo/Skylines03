@@ -25,7 +25,8 @@ void Prototype02::selfSetup(){
 
 void Prototype02::selfSetupGuis(){
     backgroundSet(new UIMapBackground());
-//    cameraSet(new UIGameCam());
+    cameraSet(new UIGameCam());
+    
     guiAdd(grid);
     guiAdd(pointCloudShader);
 }
