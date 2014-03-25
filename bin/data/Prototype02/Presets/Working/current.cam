@@ -1,0 +1,15 @@
+<camera>
+    <fov>60.000000000</fov>
+    <distance>64.528747559</distance>
+    <position>
+        <x>-4.276158333</x>
+        <y>-61.275398254</y>
+        <z>19.773694992</z>
+    </position>
+    <orientation>
+        <x>0.587943673</x>
+        <y>-0.033263579</y>
+        <z>-0.010633403</z>
+        <w>0.808148324</w>
+    </orientation>
+</camera>
