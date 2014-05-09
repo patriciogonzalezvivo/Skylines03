@@ -4,6 +4,7 @@
 #include "UIProject.h"
 
 #include "PointCloudCity.h"
+#include "SketchCity.h"
 
 class ofApp : public ofBaseApp{
 public:

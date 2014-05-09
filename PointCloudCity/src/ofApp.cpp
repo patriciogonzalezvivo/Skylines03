@@ -5,7 +5,7 @@ void ofApp::setup(){
     ofSetVerticalSync(true);
     ofToggleFullscreen();
 	
-	project = new PointCloudCity();
+	project = new SketchCity();
     project->setup();
     project->play();
 }

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3D03B15A191D8F5A0036D8E3 /* SketchCity.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3D03B158191D8F5A0036D8E3 /* SketchCity.cpp */; };
 		3DD2DD29191542F200D429CB /* UI3DGrid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3DD2DD27191542F200D429CB /* UI3DGrid.cpp */; };
 		3DD2DD31191564E700D429CB /* PointCloudCity.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3DD2DD2F191564E700D429CB /* PointCloudCity.cpp */; };
 		3DD5EBCD1912DC6A00A4383A /* ofxPCL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3DD5EBC71912DC6A00A4383A /* ofxPCL.cpp */; };
@@ -142,6 +143,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		3D03B158191D8F5A0036D8E3 /* SketchCity.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SketchCity.cpp; sourceTree = "<group>"; };
+		3D03B159191D8F5A0036D8E3 /* SketchCity.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SketchCity.h; sourceTree = "<group>"; };
 		3DD2DD27191542F200D429CB /* UI3DGrid.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UI3DGrid.cpp; sourceTree = "<group>"; };
 		3DD2DD28191542F200D429CB /* UI3DGrid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UI3DGrid.h; sourceTree = "<group>"; };
 		3DD2DD2F191564E700D429CB /* PointCloudCity.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PointCloudCity.cpp; sourceTree = "<group>"; };
@@ -787,6 +790,8 @@
 				3DD5ECC01912DCA500A4383A /* ofApp.cpp */,
 				3DD2DD30191564E700D429CB /* PointCloudCity.h */,
 				3DD2DD2F191564E700D429CB /* PointCloudCity.cpp */,
+				3D03B159191D8F5A0036D8E3 /* SketchCity.h */,
+				3D03B158191D8F5A0036D8E3 /* SketchCity.cpp */,
 			);
 			path = src;
 			sourceTree = SOURCE_ROOT;
@@ -906,6 +911,7 @@
 				3DD5EC681912DC8900A4383A /* tinyxmlparser.cpp in Sources */,
 				3DD5ECAC1912DC9100A4383A /* UIGameCam.cpp in Sources */,
 				3DD5EC541912DC8000A4383A /* ofxUITextArea.cpp in Sources */,
+				3D03B15A191D8F5A0036D8E3 /* SketchCity.cpp in Sources */,
 				3DD5EC431912DC8000A4383A /* ofxUILabelToggle.cpp in Sources */,
 				3DD5ECB01912DC9100A4383A /* UIClass.cpp in Sources */,
 				3DD5EC4E1912DC8000A4383A /* ofxUISlider.cpp in Sources */,
