@@ -10,19 +10,6 @@
 void SketchCity::selfSetup(){
     ofSetVerticalSync(true);
     
-    //  Point Clouds
-    //
-    pointsShader.load(getDataPath()+"shaders/points");
-    
-    //  Sprites
-    //
-    spriteShader.load(getDataPath()+"shaders/sprites");
-    ofDisableArbTex();
-    for (int i = 0; i < 5; i++) {
-        ofLoadImage(spriteTexture[i], getDataPath()+"images/00.png");//"+ofToString(i,2,'0')+".png");
-    }
-    ofEnableArbTex();
-    
     //  Map
     //
     uiMap.allocate(512.0*1.5, 240*1);
@@ -39,13 +26,6 @@ void SketchCity::selfSetup(){
     firstLocation.lon = 0;
     bFirstDef = false;
     
-    //  Pano Post-Process
-    //
-    ditherImage.allocate(512,256,OF_IMAGE_GRAYSCALE);
-    panoTexture.allocate(512,256);
-    panoPixels.allocate(512,256,OF_IMAGE_COLOR);
-    edge.loadFrag(getDataPath()+"shaders/edge.frag");
-    
     //  Point Cloud Mesh
     //
     mesh.clear();
@@ -57,23 +37,9 @@ void SketchCity::selfSetupGuis(){
     cameraSet(new UIGameCam());
     guiAdd(uiMap);
     guiAdd(grid);
-    guiAdd(edge);
-    guiAdd(pointsShader);
-    guiAdd(spriteShader);
 }
 
 void SketchCity::selfSetupSystemGui(){
-    sysGui->addIntSlider("Max_Dist", 0, 500, &maxDistance);
-    sysGui->addSpacer();
-    sysGui->addIntSlider("Max_Brightness", 0, 255, &maxBrightnest);
-    sysGui->addSpacer();
-    sysGui->addToggle("Dithering", &bDither);
-    sysGui->addToggle("Filter_floor", &bFilterFloor);
-    
-    sysGui->addLabel("PCL");
-    sysGui->addIntSlider("pcl_k",1,100,&pcl_k);
-    sysGui->addSlider("pcl_ml",0.01,5.0,&pcl_ml);
-    sysGui->addToggle("pcl_filder",&bPCLFilter);
     
     sysGui->addSpacer();
     sysGui->addToggle("Scrap",&bScrap);
@@ -84,7 +50,6 @@ void SketchCity::guiSystemEvent(ofxUIEventArgs &e){
 }
 
 void SketchCity::selfSetupRenderGui(){
-    rdrGui->addToggle("Show_Pano", &bShowPano);
 }
 
 void SketchCity::guiRenderEvent(ofxUIEventArgs &e){
@@ -132,171 +97,12 @@ void SketchCity::addLook(StreetView &_sv, ofPoint _center){
     Location loc = _sv.getLocation();
     
     auto it = loaded.find(id);
-    cout << _sv.getWidth() << "," << _sv.getHeight() << " at zoom " << _sv.getZoom() << endl;
     if (it == loaded.end()){
         loaded[id] = loc;
         for (int i = 0; i < _sv.links.size(); i++) {
             buffer.push_back(_sv.links[i].pano_id);
         }
         
-        ofVboMesh tmpMesh;
-        tmpMesh.setMode(OF_PRIMITIVE_POINTS);
-        
-        int mapWidth = _sv.getDepthMapWidth();
-        int mapHeight = _sv.getDepthMapHeight();
-        
-        ofQuaternion ang_offset;
-        ang_offset.makeRotate(180-_sv.getDirection(), 0, 0, 1);
-        float tiltAngle = _sv.getTiltYaw()*DEG_TO_RAD;
-        ofQuaternion tilt_offset;
-        tilt_offset.makeRotate(_sv.getTiltPitch(), cos(tiltAngle), sin(-tiltAngle), 0);
-        
-        panoTexture.begin();
-        edge.begin();
-        sv.getTextureReference().draw(0,0,panoTexture.getWidth(),panoTexture.getHeight());
-        edge.end();
-        panoTexture.end();
-        panoTexture.getTextureReference().readToPixels(panoPixels);
-        
-        depthImage = _sv.getDepthMap();
-        
-        vector<bool> data;
-        if(bDither){
-            int GrayArrayLength = mapWidth * mapHeight;
-            unsigned char * GrayArray = new unsigned char[GrayArrayLength];
-            memset(GrayArray,0,GrayArrayLength);
-            for (int y = 0; y < mapHeight;y++) {
-                for (int x = 0; x < mapWidth; x++) {
-                    
-                    int pixelCt = 0;
-                    float brightTot = 0;
-                    
-                    ofColor c = panoPixels.getColor(x, y);
-                    float brightTemp = c.getBrightness();
-                    
-                    // Brightness correction curve:
-                    brightTemp =  sqrt(255) * sqrt (brightTemp);
-                    if (brightTemp > 255) brightTemp = 255;
-                    if (brightTemp < 0) brightTemp = 0;
-                    
-                    int darkness = 255 - floor(brightTemp);
-                    
-                    int idx = y*mapWidth+x;
-                    darkness += GrayArray[idx];
-                    
-                    if( darkness >= maxBrightnest){
-                        darkness -= maxBrightnest;
-                        data.push_back(true);
-                    } else {
-                        data.push_back(false);
-                    }
-                    
-                    int darkn8 = round(darkness / 8);
-                    
-                    // Atkinson dithering algorithm:  http://verlagmartinkoch.at/software/dither/index.html
-                    // Distribute error as follows:
-                    //     [ ]  1/8  1/8
-                    //1/8  1/8  1/8
-                    //     1/8
-                    
-                    if ((idx + 1) < GrayArrayLength)
-                        GrayArray[idx + 1] += darkn8;
-                    if ((idx + 2) < GrayArrayLength)
-                        GrayArray[idx + 2] += darkn8;
-                    if ((idx + mapWidth - 1) < GrayArrayLength)
-                        GrayArray[idx + mapWidth - 1] += darkn8;
-                    if ((idx + mapWidth) < GrayArrayLength)
-                        GrayArray[idx + mapWidth] += darkn8;
-                    if ((idx + mapWidth + 1) < GrayArrayLength)
-                        GrayArray[idx + mapWidth + 1 ] += darkn8;
-                    if ((idx + 2 * mapWidth) < GrayArrayLength)
-                        GrayArray[idx + 2 * mapWidth] += darkn8;
-                }
-            }
-            delete []GrayArray;
-            
-            ofPixels ditherPixels;
-            ditherPixels.allocate(mapWidth, mapHeight, 1);
-            for(int i = 0; i < data.size();i++){
-                ditherPixels.setColor(i, data[i]?0:255);
-            }
-            ditherImage.setFromPixels(ditherPixels);
-        }
-        
-        for (int x = 0; x < mapWidth; x++) {
-            for (unsigned int y = 0; y < mapHeight; y++) {
-                
-                float rad_azimuth = x / (float) (mapWidth - 1.0f) * TWO_PI;
-                float rad_elevation = y / (float) (mapHeight - 1.0f) * PI;
-                
-                ofPoint pos;
-                pos.x = sin(rad_elevation) * sin(rad_azimuth);
-                pos.y = sin(rad_elevation) * cos(rad_azimuth);
-                pos.z = cos(rad_elevation);
-                
-                int index = y*mapWidth+x;
-                int depthMapIndex = _sv.depthmapIndices[index];
-                if (depthMapIndex != 0){
-                    DepthMapPlane plane = _sv.depthmapPlanes[depthMapIndex];
-                    double distance = -plane.d/(plane.x * pos.x + plane.y * pos.y + -plane.z * pos.z);
-                    float brigtness = panoPixels.getColor(x,y).getBrightness();
-                    
-                    bool bDo = true;
-                    if(bDither){
-                        bDo = data[index];
-                    } else {
-                        if(maxBrightnest>0){
-                            if(brigtness > maxBrightnest){
-                                bDo = false;
-                            }
-                        }
-                    }
-                    
-                    if(maxDistance>0){
-                        if(distance>maxDistance){
-                            bDo = false;
-                        }
-                    }
-                    
-                    if(bDo){
-                        ofPoint vertex;
-                        vertex = ang_offset * tilt_offset * pos;
-                        vertex *= distance;
-                        vertex += _center+ofPoint(0,0,_sv.getGroundHeight());//+_sv.getElevation());
-                        
-                        if(bFilterFloor){
-                            if(ofPoint(plane.x,plane.y,plane.z).dot(ofPoint(0,0,-1))<0.5){
-                                tmpMesh.addColor(panoPixels.getColor(x,y));
-                                tmpMesh.addVertex(vertex);
-                            }
-                        } else {
-                            tmpMesh.addColor(panoPixels.getColor(x,y));
-                            tmpMesh.addVertex(vertex);
-                        }
-                        
-//                        tmpMesh.addColor(panoPixels.getColor(x,y));
-//                        mesh.addNormal(ofPoint(plane.x,plane.y,plane.z));
-//                        tmpMesh.addVertex(vertex);
-                    }
-                }
-            }
-        }
-        
-        //  Downsample
-        //
-        if(bPCLFilter){
-            ofxPCL::ColorPointCloud cloud = ofxPCL::toPCL<ofxPCL::ColorPointCloud>(tmpMesh);
-            ofxPCL::statisticalOutlierRemoval(cloud, pcl_k, pcl_ml);
-            
-//            float def = 0.001f;
-//            ofxPCL::downsample(cloud, ofVec3f(def,def,def));
-            tmpMesh.clear();
-            tmpMesh = ofxPCL::toOF(cloud);
-
-        }
-        
-        mesh.addColors(tmpMesh.getColors());
-        mesh.addVertices(tmpMesh.getVertices());
     }
 }
 
@@ -310,37 +116,7 @@ void SketchCity::selfDraw(){
     
     ofSetColor(255);
     
-    if(spriteShader.bEnable){
-        ofEnableAlphaBlending();
-        ofDisableArbTex();
-        glDepthMask(GL_FALSE);
-        glEnable(GL_NORMALIZE);
-        ofEnablePointSprites();
-        
-        spriteShader.begin();
-        spriteShader.getShader().setUniformTexture("tex0",spriteTexture[0],0);
-        spriteShader.getShader().setUniformTexture("tex1",spriteTexture[1],1);
-        spriteShader.getShader().setUniformTexture("tex2",spriteTexture[2],2);
-        spriteShader.getShader().setUniformTexture("tex3",spriteTexture[3],3);
-        spriteShader.getShader().setUniformTexture("tex4",spriteTexture[4],4);
-        mesh.drawVertices();
-        spriteShader.end();
-        
-        ofDisablePointSprites();
-        glDisable(GL_NORMALIZE);
-        glDepthMask(GL_TRUE);
-        ofEnableArbTex();
-    } else {
-        ofPushStyle();
-        ofPushMatrix();
-        glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-        pointsShader.begin();
-        mesh.drawVertices();
-        pointsShader.end();
-        glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
-        ofPopMatrix();
-        ofPopStyle();
-    }
+    mesh.draw();
     
     materials["MATERIAL 1"]->end();
 }
@@ -415,21 +191,6 @@ void SketchCity::selfDrawOverlay(){
         
         ofPopMatrix();
         ofPopStyle();
-        
-        if(bShowPano){
-            ofPushMatrix();
-            ofTranslate(ofPoint(ofGetWidth()-panoTexture.getWidth()-10,uiMap.getHeight()+20));
-            ofPushMatrix();
-            ofScale(0.5, 0.5);
-            panoTexture.draw(0,0);
-            depthImage.draw(panoTexture.getWidth(),0);
-            if(bDither){
-                ditherImage.draw(-panoTexture.getWidth(),0);
-            }
-            ofPopMatrix();
-            
-            ofPopMatrix();
-        }
     }
 }
 

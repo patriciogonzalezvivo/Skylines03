@@ -57,30 +57,10 @@ protected:
     StreetView  sv;
     vector<string> buffer;
     bool        bScrap;
-
-    //  Post processing pano image
-    //
-    UIShader    edge;
-    ofFbo       panoTexture;
-    ofPixels    panoPixels;
-    ofImage     ditherImage;
-    ofImage     depthImage;
-    bool        bDither;
-    bool        bFilterFloor;
-    int         maxBrightnest;
-    int         maxDistance;
-    bool        bShowPano;
     
     //  Point Cloud
     //
     void        addLook(StreetView &_sv, ofPoint _center);
     map<string,Location> loaded;
     ofVboMesh   mesh;
-    int         pcl_k;
-    float       pcl_ml;
-    bool        bPCLFilter;
-    
-    UIShader    pointsShader;
-    UIShader    spriteShader;
-    ofTexture   spriteTexture[5];
 };
