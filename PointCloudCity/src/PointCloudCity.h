@@ -62,7 +62,6 @@ protected:
 
     //  Post processing pano image
     //
-    UIShader    edge;
     ofFbo       panoTexture;
     ofPixels    panoPixels;
     ofImage     ditherImage;

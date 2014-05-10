@@ -7,6 +7,9 @@
 
 #include "SketchCity.h"
 
+using namespace ofxCv;
+using namespace cv;
+
 void SketchCity::selfSetup(){
     ofSetVerticalSync(true);
     
@@ -29,7 +32,7 @@ void SketchCity::selfSetup(){
     //  Point Cloud Mesh
     //
     mesh.clear();
-    mesh.setMode(OF_PRIMITIVE_POINTS);
+    mesh.setMode(OF_PRIMITIVE_LINES);
 }
 
 void SketchCity::selfSetupGuis(){
@@ -40,6 +43,17 @@ void SketchCity::selfSetupGuis(){
 }
 
 void SketchCity::selfSetupSystemGui(){
+    sysGui->addIntSlider("Max_Dist", 0, 500, &maxDistance);
+    sysGui->addSpacer();
+    sysGui->addLabel("Canny");
+    sysGui->addSlider("Canny_Threshold1", 0.0, 1024, &cannyThreshold1);
+    sysGui->addSlider("Canny_Threshold2",0.0,1024,&cannyThreshold2);
+    sysGui->addSlider("MinGapLenght", 2.0, 12.0, &minGapLength);
+    sysGui->addSlider("MinPathLenght", 0.0, 50.0, &minPathLength);
+    
+    sysGui->addLabel("HoughLines");
+    sysGui->addSlider("HoughtMinLinLength", 1, 10, &houghtMinLinLenght);
+    sysGui->addSlider("HoughtMaxLineGap", 1, 10, &houghtMaxLineGap);
     
     sysGui->addSpacer();
     sysGui->addToggle("Scrap",&bScrap);
@@ -50,6 +64,7 @@ void SketchCity::guiSystemEvent(ofxUIEventArgs &e){
 }
 
 void SketchCity::selfSetupRenderGui(){
+    rdrGui->addToggle("Show_Pano", &bShowPano);
 }
 
 void SketchCity::guiRenderEvent(ofxUIEventArgs &e){
@@ -66,8 +81,6 @@ void SketchCity::selfUpdate(){
         
         if(loaded.size()==0){
             mesh.clear();
-            mesh.setMode(OF_PRIMITIVE_POINTS);
-            
             firstLocation = loc;
             bFirstDef = true;
         } else {
@@ -82,7 +95,7 @@ void SketchCity::selfUpdate(){
             pos.y = dist*sin(-angle);
         }
     
-        addLook(sv,pos);
+        addLook(pos);
         
         if(buffer.size()>0){
             sv.setPanoId(buffer[0]);
@@ -92,18 +105,166 @@ void SketchCity::selfUpdate(){
     
 }
 
-void SketchCity::addLook(StreetView &_sv, ofPoint _center){
-    string id = _sv.getPanoId();
-    Location loc = _sv.getLocation();
+void SketchCity::addLook(ofPoint _center){
+    string id = sv.getPanoId();
+    Location loc = sv.getLocation();
     
     auto it = loaded.find(id);
     if (it == loaded.end()){
         loaded[id] = loc;
-        for (int i = 0; i < _sv.links.size(); i++) {
-            buffer.push_back(_sv.links[i].pano_id);
+        for (int i = 0; i < sv.links.size(); i++) {
+            buffer.push_back(sv.links[i].pano_id);
         }
         
+        //  Get the pixels
+        //
+        ofPixels pixels;
+        sv.getTextureReference().readToPixels(pixels);
+        
+        //  Extract the lines using openCv
+        //
+        image = toCv(pixels);
+        convertColor(image, gray, CV_RGB2GRAY);
+        Canny(gray, canny, cannyThreshold1*2.0, cannyThreshold2*2.0, 5);
+        
+        //  Hought
+        //
+        vector<Vec4i> cvlines;
+        HoughLinesP(canny, cvlines, 1,(PI/180),1,houghtMinLinLenght, houghtMaxLineGap);
+        lines.clear();
+        for( size_t i = 0; i < cvlines.size(); i++ ){
+            Line line;
+            line.a.set(cvlines[i][0],cvlines[i][1]);
+            line.b.set(cvlines[i][2],cvlines[i][3]);
+            lines.push_back(line);
+        }
+        
+        for(int i = 0; i < lines.size(); i++){
+            ofPoint vertexA = getVertex(lines[i].a);
+            ofPoint vertexB = getVertex(lines[i].b);
+            ofPoint diff = vertexA - vertexB;
+            
+            if(vertexA != ofPoint(0,0) && vertexB != ofPoint(0,0) && diff.length() < 20){
+                mesh.addVertex(vertexA+_center);
+                mesh.addVertex(vertexB+_center);
+            }
+        }
+        
+        //  Translate the images
+        //
+//        ofPixels cannyOF;
+//        toOf(canny, cannyOF);
+//        vector<ofPolyline> lines = getPaths(cannyOF, minGapLength, minPathLength);
+//        
+//        for(int i = 0; i < lines.size(); i++){
+//            ofPoint prev = ofPoint(0,0);
+//            for(int j = 0; j < lines[i].size(); j++){
+//                ofPoint point = getVertex(lines[i][j]);
+//                ofPoint diff = point - prev;
+//                
+//                if(point != ofPoint(0,0) && prev != ofPoint(0,0) && diff.length() < 20){
+//                    mesh.addVertex(prev+_center);
+//                    mesh.addVertex(point+_center);
+//                }
+//                prev = point;
+//            }
+//        }
+//        bScrap = false;
     }
+}
+
+ofPoint SketchCity::getVertex(ofVec2f _pos){
+    
+    ofQuaternion ang_offset;
+    ang_offset.makeRotate(180-sv.getDirection(), 0, 0, 1);
+    float tiltAngle = sv.getTiltYaw()*DEG_TO_RAD;
+    
+    ofQuaternion tilt_offset;
+    tilt_offset.makeRotate(sv.getTiltPitch(), cos(tiltAngle), sin(-tiltAngle), 0);
+    
+    float x = _pos.x/((float)sv.getWidth());
+    float y = _pos.y/((float)sv.getHeight());
+    
+    float rad_azimuth = x * TWO_PI;
+    float rad_elevation = y * PI;
+    
+    x *= ((float)sv.getDepthMapWidth());
+    y *= ((float)sv.getDepthMapHeight());
+    
+    int index = ((int)y)*sv.getDepthMapWidth()+((int)x);
+    int depthMapIndex = sv.depthmapIndices[index];
+    
+    if (depthMapIndex != 0){
+        ofPoint pos;
+        pos.x = sin(rad_elevation) * sin(rad_azimuth);
+        pos.y = sin(rad_elevation) * cos(rad_azimuth);
+        pos.z = cos(rad_elevation);
+        
+        ofPoint vertex;
+        DepthMapPlane plane = sv.depthmapPlanes[depthMapIndex];
+        double distance = -plane.d/(plane.x * pos.x + plane.y * pos.y + -plane.z * pos.z);
+        
+        vertex = ang_offset * tilt_offset * pos;
+        vertex *= distance;
+        vertex += ofPoint(0,0,sv.getGroundHeight());
+        
+        if(ofPoint(plane.x,plane.y,plane.z).dot(ofPoint(0,0,-1))<0.5 && distance < maxDistance){
+            return vertex;
+        }
+    }
+    
+    return ofPoint(0,0);
+}
+
+typedef std::pair<int, int> intPair;
+vector<ofPolyline> SketchCity::getPaths(ofPixels& img, float minGapLength, int minPathLength) {
+	float minGapSquared = minGapLength * minGapLength;
+	
+	list<intPair> remaining;
+	int w = img.getWidth(), h = img.getHeight();
+	for(int y = 0; y < h; y++) {
+		for(int x = 0; x < w; x++) {
+			if(img.getColor(x, y).getBrightness() > 128) {
+				remaining.push_back(intPair(x, y));
+			}
+		}
+	}
+	
+	vector<ofPolyline> paths;
+	if(!remaining.empty()) {
+		int x = remaining.back().first, y = remaining.back().second;
+		while(!remaining.empty()) {
+			int nearDistance = 0;
+			list<intPair>::iterator nearIt, it;
+			for(it = remaining.begin(); it != remaining.end(); it++) {
+				intPair& cur = *it;
+				int xd = x - cur.first, yd = y - cur.second;
+				int distance = xd * xd + yd * yd;
+				if(it == remaining.begin() || distance < nearDistance) {
+					nearIt = it, nearDistance = distance;
+					// break for immediate neighbors
+					if(nearDistance < 4) {
+						break;
+					}
+				}
+			}
+			intPair& next = *nearIt;
+			x = next.first, y = next.second;
+			if(paths.empty()) {
+				paths.push_back(ofPolyline());
+			} else if(nearDistance >= minGapSquared) {
+				if(paths.back().size() < minPathLength) {
+					paths.back().clear();
+				} else {
+					paths.push_back(ofPolyline());
+				}
+			}
+			paths.back().addVertex(ofVec2f(x, y));
+			remaining.erase(nearIt);
+		}
+	}
+	
+	return paths;
 }
 
 void SketchCity::selfDraw(){
@@ -114,9 +275,10 @@ void SketchCity::selfDraw(){
     grid.draw();
     ofPopMatrix();
     
-    ofSetColor(255);
-    
+    ofPushStyle();
+    ofSetColor(0,100);
     mesh.draw();
+    ofPopStyle();
     
     materials["MATERIAL 1"]->end();
 }
@@ -187,10 +349,25 @@ void SketchCity::selfDrawOverlay(){
                 ofPopStyle();
             }
         }
-        
-        
+
         ofPopMatrix();
         ofPopStyle();
+        
+        if(bShowPano){
+            ofPushMatrix();
+            ofTranslate(ofPoint(ofGetWidth()-sv.getWidth()-10,uiMap.getHeight()+20));
+            ofPushMatrix();
+            ofSetColor(255);
+            drawMat(canny,0,0);
+            ofSetColor(255,0,0);
+            for(int i = 0; i < lines.size();i++){
+                ofLine(lines[i].a, lines[i].b);
+            }
+            ofSetColor(255);
+            
+            ofPopMatrix();
+            ofPopMatrix();
+        }
     }
 }
 

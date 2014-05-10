@@ -44,7 +44,6 @@ void PointCloudCity::selfSetup(){
     ditherImage.allocate(512,256,OF_IMAGE_GRAYSCALE);
     panoTexture.allocate(512,256);
     panoPixels.allocate(512,256,OF_IMAGE_COLOR);
-    edge.loadFrag(getDataPath()+"shaders/edge.frag");
     
     //  Point Cloud Mesh
     //
@@ -57,7 +56,6 @@ void PointCloudCity::selfSetupGuis(){
     cameraSet(new UIGameCam());
     guiAdd(uiMap);
     guiAdd(grid);
-    guiAdd(edge);
     guiAdd(pointsShader);
     guiAdd(spriteShader);
 }
@@ -152,9 +150,7 @@ void PointCloudCity::addLook(StreetView &_sv, ofPoint _center){
         tilt_offset.makeRotate(_sv.getTiltPitch(), cos(tiltAngle), sin(-tiltAngle), 0);
         
         panoTexture.begin();
-        edge.begin();
         sv.getTextureReference().draw(0,0,panoTexture.getWidth(),panoTexture.getHeight());
-        edge.end();
         panoTexture.end();
         panoTexture.getTextureReference().readToPixels(panoPixels);
         

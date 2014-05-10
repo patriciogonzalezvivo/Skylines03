@@ -15,6 +15,12 @@
 #include "UIMap.h"
 #include "StreetView.h"
 
+#include "ofxCv.h"
+
+struct Line{
+    ofPoint a,b;
+};
+
 class SketchCity : public UI3DProject {
 public:
     
@@ -56,11 +62,26 @@ protected:
     //
     StreetView  sv;
     vector<string> buffer;
-    bool        bScrap;
+    
+    cv::Mat         image, gray, canny;
+    float           cannyThreshold1, cannyThreshold2;
+    int             maxDistance;
+    
+    vector<ofPolyline>  getPaths(ofPixels& img, float minGapLength = 2, int minPathLength = 0);
+    vector<ofPolyline>  contourLines;
+    float           minPathLength, minGapLength;
+    
+    ofPoint         getVertex(ofVec2f _pos);
+    
+    vector<Line>    lines;
+    float           houghtMinLinLenght,houghtMaxLineGap;
+    bool            bScrap, bShowPano;
+    
+    
     
     //  Point Cloud
     //
-    void        addLook(StreetView &_sv, ofPoint _center);
+    void        addLook(ofPoint _center);
     map<string,Location> loaded;
     ofVboMesh   mesh;
 };
