@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
-#include "UIProject.h"
+#include "ofxPro.h"
 
 #include "PointCloudCity.h"
 #include "SketchCity.h"
@@ -22,5 +22,5 @@ public:
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
     
-    UI2DProject* project;
+    ofx2DPro* project;
 };

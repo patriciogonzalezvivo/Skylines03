@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "UIProject.h"
+#include "ofx3DPro.h"
 
 #include "UIShader.h"
 #include "UI3DGrid.h"
@@ -17,7 +17,7 @@
 
 #include "ofxPCL.h"
 
-class PointCloudCity : public UI3DProject {
+class PointCloudCity : public ofx3DPro {
 public:
     
     string getSystemName(){return "PointCloudCity";}

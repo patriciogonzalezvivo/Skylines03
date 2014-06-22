@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "UIProject.h"
+#include "ofx3DPro.h"
 
 #include "UIShader.h"
 #include "UI3DGrid.h"
@@ -21,7 +21,7 @@ struct Line{
     ofPoint a,b;
 };
 
-class SketchCity : public UI3DProject {
+class SketchCity : public ofx3DPro {
 public:
     
     string getSystemName(){return "SketchCity";}
@@ -77,11 +77,11 @@ protected:
     float           houghtMinLinLenght,houghtMaxLineGap;
     bool            bScrap, bShowPano;
     
-    
-    
     //  Point Cloud
     //
     void        addLook(ofPoint _center);
     map<string,Location> loaded;
-    ofVboMesh   mesh;
+    
+    ofVboMesh   pointMesh;
+    ofVboMesh   lineMesh;
 };

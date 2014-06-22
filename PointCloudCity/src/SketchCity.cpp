@@ -31,8 +31,8 @@ void SketchCity::selfSetup(){
     
     //  Point Cloud Mesh
     //
-    mesh.clear();
-    mesh.setMode(OF_PRIMITIVE_LINES);
+    lineMesh.clear();
+    lineMesh.setMode(OF_PRIMITIVE_LINES);
 }
 
 void SketchCity::selfSetupGuis(){
@@ -80,7 +80,7 @@ void SketchCity::selfUpdate(){
         ofPoint pos = ofPoint(0,0);
         
         if(loaded.size()==0){
-            mesh.clear();
+            lineMesh.clear();
             firstLocation = loc;
             bFirstDef = true;
         } else {
@@ -129,47 +129,47 @@ void SketchCity::addLook(ofPoint _center){
         
         //  Hought
         //
-        vector<Vec4i> cvlines;
-        HoughLinesP(canny, cvlines, 1,(PI/180),1,houghtMinLinLenght, houghtMaxLineGap);
-        lines.clear();
-        for( size_t i = 0; i < cvlines.size(); i++ ){
-            Line line;
-            line.a.set(cvlines[i][0],cvlines[i][1]);
-            line.b.set(cvlines[i][2],cvlines[i][3]);
-            lines.push_back(line);
-        }
-        
-        for(int i = 0; i < lines.size(); i++){
-            ofPoint vertexA = getVertex(lines[i].a);
-            ofPoint vertexB = getVertex(lines[i].b);
-            ofPoint diff = vertexA - vertexB;
-            
-            if(vertexA != ofPoint(0,0) && vertexB != ofPoint(0,0) && diff.length() < 20){
-                mesh.addVertex(vertexA+_center);
-                mesh.addVertex(vertexB+_center);
-            }
-        }
+//        vector<Vec4i> cvlines;
+//        HoughLinesP(canny, cvlines, 1,(PI/180)*90,1,houghtMinLinLenght, houghtMaxLineGap);
+//        lines.clear();
+//        for( size_t i = 0; i < cvlines.size(); i++ ){
+//            Line line;
+//            line.a.set(cvlines[i][0],cvlines[i][1]);
+//            line.b.set(cvlines[i][2],cvlines[i][3]);
+//            lines.push_back(line);
+//        }
+//        
+//        for(int i = 0; i < lines.size(); i++){
+//            ofPoint vertexA = getVertex(lines[i].a);
+//            ofPoint vertexB = getVertex(lines[i].b);
+//            ofPoint diff = vertexA - vertexB;
+//            
+//            if(vertexA != ofPoint(0,0) && vertexB != ofPoint(0,0) && diff.length() < 20){
+//                lineMesh.addVertex(vertexA+_center);
+//                lineMesh.addVertex(vertexB+_center);
+//            }
+//        }
         
         //  Translate the images
         //
-//        ofPixels cannyOF;
-//        toOf(canny, cannyOF);
-//        vector<ofPolyline> lines = getPaths(cannyOF, minGapLength, minPathLength);
-//        
-//        for(int i = 0; i < lines.size(); i++){
-//            ofPoint prev = ofPoint(0,0);
-//            for(int j = 0; j < lines[i].size(); j++){
-//                ofPoint point = getVertex(lines[i][j]);
-//                ofPoint diff = point - prev;
-//                
-//                if(point != ofPoint(0,0) && prev != ofPoint(0,0) && diff.length() < 20){
-//                    mesh.addVertex(prev+_center);
-//                    mesh.addVertex(point+_center);
-//                }
-//                prev = point;
-//            }
-//        }
-//        bScrap = false;
+        ofPixels cannyOF;
+        toOf(canny, cannyOF);
+        vector<ofPolyline> lines = getPaths(cannyOF, minGapLength, minPathLength);
+        
+        for(int i = 0; i < lines.size(); i++){
+            ofPoint prev = ofPoint(0,0);
+            for(int j = 0; j < lines[i].size(); j++){
+                ofPoint point = getVertex(lines[i][j]);
+                ofPoint diff = point - prev;
+                
+                if(point != ofPoint(0,0) && prev != ofPoint(0,0) && diff.length() < 20){
+                    lineMesh.addVertex(prev+_center);
+                    lineMesh.addVertex(point+_center);
+                }
+                prev = point;
+            }
+        }
+        bScrap = false;
     }
 }
 
@@ -277,7 +277,7 @@ void SketchCity::selfDraw(){
     
     ofPushStyle();
     ofSetColor(0,100);
-    mesh.draw();
+    lineMesh.draw();
     ofPopStyle();
     
     materials["MATERIAL 1"]->end();
@@ -376,7 +376,7 @@ void SketchCity::selfKeyPressed(ofKeyEventArgs & args){
         buffer.clear();
         sv.setLocation(uiMap.getCenter());
     } else if (args.key == 'p'){
-        mesh.clear();
+        lineMesh.clear();
         loaded.clear();
         buffer.clear();
     }
