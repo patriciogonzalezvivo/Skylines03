@@ -1,4 +1,0 @@
-ofxUI
-ofxUIProject
-ofxXmlSettings
-ofxPCL
