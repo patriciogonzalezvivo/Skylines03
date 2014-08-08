@@ -14,7 +14,7 @@ Series of postcards revealing the invisible information of a city that is otherw
 
 [ ![Île de la Cité, Paris](https://farm3.staticflickr.com/2936/14114245611_0c7b69a0b9_b_d.jpg) ](https://www.flickr.com/photos/106950246@N06/14114245611/)
 
-# [About SKYLINES](http://www.patriciogonzalezvivo.com/2014/skylines/)
+## [About SKYLINES](http://www.patriciogonzalezvivo.com/2014/skylines/)
 
 This series of projects is about awareness. It is about the tools and techniques we use to see the world around us.
 
