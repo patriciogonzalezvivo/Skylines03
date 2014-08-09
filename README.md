@@ -4,7 +4,7 @@
 
 Series of postcards revealing the invisible information of a city that is otherwise trapped inside corporate databases, freeing private information collected from public spaces.
 
-[ ![Île de la Cité, Paris](https://farm3.staticflickr.com/2936/14114245611_0c7b69a0b9_b_d.jpg) ](http://localhost:8888/2014/skylines/ile-de-la-cite/)
+[ ![Île de la Cité, Paris](https://farm3.staticflickr.com/2936/14114245611_0c7b69a0b9_b_d.jpg) ](http://patriciogonzalezvivo.com/2014/skylines/ile-de-la-cite/)
 [**WebGL postcard version**](http://patriciogonzalezvivo.com/2014/skylines/ile-de-la-cite/) using [Three.js](http://threejs.org/) and [PoTree.js](http://potree.org/)
 
 [ ![Williamsburg Bridge](https://farm8.staticflickr.com/7298/14134184803_292e0fb3a0_b_d.jpg) ](https://www.flickr.com/photos/106950246@N06/14134184803/)
